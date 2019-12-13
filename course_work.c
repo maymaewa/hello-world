@@ -3,15 +3,19 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <conio.h>
-#define MAX_SIZE 60
+#include <errno.h>
+#define MAX_SIZE 80
 
-int input_n(int a);
+int input_n();
 char** input_array(int n, int** len_first);
+char** read_text(int n, int** len_first, char* file_name);
 int new_gets(char* s);
-char* input_symb(int n);
+char* input_symb(int* n);
+void symb_output(char* arr);
 void array_output(char** a, int n);
 char** array_account(char** a, char** b,int* len, char* s, int n, int k, int* stb);
 void result_output(char** b, int n);
+void result_output_file(char* file_name, char** b, int n);
 char** clear_array(char** a, int n);
 int** clear_array_int(int** a, int n);
 
@@ -25,14 +29,18 @@ int main()
 		flags = 0,    //переменная, означающая проведение расчетов
 		g = 0,		  //количество строк в результирующем массиве массиве
 		k = 0,		  //количество символов-разделителей
+		h = 0,		  //переменная подменю
+		i,			  //переменная для организации цикла
 		n = 0;        //количество строк в исходном массиве
+	char file_name[21]; //название файла
+	char* s = NULL;
 	char** a = NULL;   //исходный массив
 	char** b = NULL;   //результирующий массив
-	char* s = NULL;	   //массив-символов разделителей
 	int* len = NULL;   //массив длин строк
-	printf("Меню:\n1 - ввод данных\n2 - вывод исходного массива\n3 - расчет результата\n4 - вывод результирующего массива\n5 - справка\n0 - выход\n");
+	
 	do
 	{
+		printf("Меню:\n1 - ввод данных\n2 - вывод исходного массива\n3 - расчет результата\n4 - вывод результирующего массива\n5 - справка\n0 - выход\n");
 		do
 		{
 			printf("Выберите пункт меню\n");
@@ -46,33 +54,73 @@ int main()
 			{
 				flag1 = 0;
 				flag3 = 0;
-				a = clear_array(a, n);
-				free(s);
-				s = NULL;
+				if (flag1)
+				{
+					a = clear_array(a, n);
+					free(s);
+					s = NULL;
+				}
 				printf("Если хотите заново ввести количество строк, введите 1\n");
 				scanf_s("%d", &flagn);
 				if (flagn == 1)
-					n = input_n(1);
-				printf("Если хотите заново ввести количество символов-разделитетлей, введите 1\n");
-				scanf_s("%d", &flagn);
-				if (flagn == 1)
-					k = input_n(2);
+					n = input_n();
 			}
 			else
 			{
-				n = input_n(1);
-				k = input_n(2);
+				n = input_n();
 				flagn = 1;
 			}
-			if (((a = input_array(n, &len)) != NULL) && ((s = input_symb(k)) != NULL))
-				flag1 = 1;
-			else puts("Error at memory allocation!");
-			break;
+			puts("Подменю:");
+			puts("1 - ввести через консоль");
+			puts("2 - ввести через файл file.txt");
+			puts("3 - ввести через другой файл");
+			puts("4 - выйти из подменю");
+			do
+			{
+				puts("Выберите способ, которым вы хотите ввести строки");
+				scanf_s("%d", &h);
+				if ((h < 0) || (h > 4)) printf("Выбран несуществующий пункт меню. \n");
+			} while ((h < 0) || (h > 4));
+			switch (h)
+			{
+			case 1:
+				if (((a = input_array(n, &len)) != NULL) && ((s = input_symb(&k)) != NULL))
+					flag1 = 1;
+				else puts("Error at memory allocation!");
+				break;
+			case 2:
+				strcpy(file_name, "file.txt");
+				if (((a = read_text(n, &len, file_name)) != NULL) && ((s = input_symb(&k)) != NULL))
+					flag1 = 1;
+				else puts("Error at memory allocation!");
+				break;
+			case 3:
+
+				puts("Введите название файла:");
+				getchar();
+				for(i = 0; i < 8; i++)
+				{
+					file_name[i] = getchar();
+				}
+				file_name[i] = '\0';
+				if (((a = read_text(n, &len, file_name)) != NULL) && ((s = input_symb(&k)) != NULL))
+					flag1 = 1;
+				else puts("Error at memory allocation!");
+				break;
+			case 4:
+
+				break;
+			}
+
 		case 2:
 			if (flag1 == 1)
+			{
 				array_output(a, n);
+				symb_output(s);
+			}
 			else printf("Вы не ввели исходные данные(пункт 1)\n");
 			break;
+
 		case 3:
 			if (flag1 == 1)
 			{
@@ -80,20 +128,60 @@ int main()
 					printf("Вы уже произвели расчет.");
 				else
 				{
-					b = array_account(a, b, len, s, n, k, &g);
+					b = array_account(a, b, len, s, k, n, &g);
 					printf("Произведен расчет\n");
 					flag3 = 1;
 				}
 			}
 			else printf("Вы еще не ввели исходные данные. Для того, чтобы произвести расчет, введите исходные данные(пункт 1)\n");
 			break;
+
 		case 4:
 			if (flag3 == 1)
 			{
-				result_output(b, g);
+				puts("Подменю:");
+				puts("1 - вывести через консоль");
+				puts("2 - вывести через файл resl.txt");
+				puts("3 - вывести через другой файл");
+				puts("4 - выйти из подменю");
+				do
+				{
+					puts("Выберите способ, которым вы хотите вывести результат");
+					scanf_s("%d", &h);
+					if ((h < 0) || (h > 4)) printf("Выбран несуществующий пункт меню. \n");
+				} while ((h < 0) || (h > 4));
+				switch (h)
+				{
+				case 1:
+					result_output(b, g);
+					break;
+				case 2:
+					strcpy(file_name, "resl.txt");
+					result_output_file(file_name, b, g);
+					break;
+				case 3:
+					puts("Введите название файла:");
+					getchar();
+					for (i = 0; i < 8; i++)
+					{
+						file_name[i] = getchar();
+					}
+					file_name[i] = '\0';
+					result_output_file(file_name, b, g);
+					break;
+				case 4:
+
+					break;
+				}
 			}
 			else printf("Вы еще не произвели расчет. Для того, чтобы вывести результат, нужно провести расчет(пункт 3)\n");
 			break;
+
+		case 5:
+			puts("Данная программа проводит обработку строк, оставляя только");
+			puts("строки с нечетным количеством слов. Она удаляет слова, имеющие минимальную длину в строке.");
+			break;
+
 		case 0:
 			if (flag1 == 1)
 				a = clear_array(a, n);
@@ -101,28 +189,28 @@ int main()
 				a = clear_array(b, g);
 			break;
 		}
+		system("pause");
+		system("CLS");
 	} while (l != 0);
 }
-int input_n(int a)
+//функция для ввода количества строк
+int input_n()
 {
 	int n; //количество строк
 	do
 	{
-		if(a == 1) printf("Введите количество строк(оно должно быть положительным) :\n");
-		if(a == 2) printf("Введите количество символов-разделителей(оно должно быть положительным) :\n");
+		printf("Введите количество строк(оно должно быть положительным) :\n");
 		scanf_s("%d", &n);
-
 		if (n <= 0)
 			printf("Неверное число.\n");
 	} while (n <= 0);
 	return n;
 }
-
+//функция для ввода строк
 char** input_array(int n, int** len_first)
 {
 	char** a = NULL;
-	char s[MAX_SIZE];
-	int i, j,   // переменные для организации цикла
+	int i,  // переменные для организации цикла
 		count;  // переменная для очищения памяти
 	count = 0;
 	int* len = NULL;
@@ -139,7 +227,7 @@ char** input_array(int n, int** len_first)
 			}
 			else
 			{
-				a = clear_array(a, n);
+				a = clear_array(a, count);
 			}
 		}
 	}
@@ -151,157 +239,257 @@ char** input_array(int n, int** len_first)
 	*len_first = len;
 	return a;
 }
+//функция для чтения строк из файла
+char** read_text(int n, int** len_first, char* file_name)
+{
+	int i;
+	int* len;
+	int count;
+	char** a = NULL;
+	char str1[MAX_SIZE];
+	FILE* df;
+	df = fopen(file_name, "r");
+	if (df != NULL)
+	{
+		rewind(df);
+		a = (char**)malloc(n * sizeof(char*));
+		len = (int*)malloc(n * sizeof(int));
+		if ((a != NULL) && (len != NULL))
+		{
+			for (i = 0, count = 0; i < n; i++)
+			{
+				a[i] = (char*)malloc(MAX_SIZE * sizeof(char));
+				if (a[i] != NULL)
+				{
+					count++;
+					fgets(str1, MAX_SIZE, df);
+					len[i] = strlen(str1)-1;
+					str1[len[i]] = '\0';
+					strcpy(a[i], str1);
+				}
+				else
+				{
+					i = n;
+					puts("Error at string allocation! Array not completed!");
+				}
+			}
+			*len_first = len;
+		}
+		else puts("Error at array allocation");
+		if (fclose(df) == EOF) perror("Output closing error");
+	}
+	else perror("Data error");
+	return a;
+}
+//функция для получения новой строки
 int new_gets(char* s)
 {
 	char c;
 	int i;
-	for (i = 0; ((c = getchar()) != '\n') && (i < MAX_SIZE - 1); i++, s++) *s = c;
+	for (i = 0; ((c = getch()) != '\r')&& (c != '\n') && (i < MAX_SIZE - 1); i++, s++)
+	{
+		printf("%c", c);
+		*s = c;
+	}
+	puts("\n");
 	*s = '\0';
-	if (i == (MAX_SIZE - 1)) puts("Вы ввели максимальное количество символов в строку.");
+	if (i == MAX_SIZE) puts("Вы ввели максимальное количество символов в строку.");
 	return i;
 }
+//функция для вывода исходных строк
 void array_output(char** a, int n)
 {
 	int i;
 	for (i = 0; i < n; i++)
 		printf("Ваша %d строка: %s\n", i+1, a[i]);
 }
-// Функция ввода массива символов-разделителей
-char* input_symb(int n)
+//функция для вывода символов-разделителей
+void symb_output(char* arr)
 {
-	char* symb = NULL,
-		c;
-	int i, j,
-		k;
-	symb = (char*)malloc((n + 1) * sizeof(char)); 
-	if (symb != NULL)
+	int i;
+	puts("Массив символов-разделителей:");
+	for (i = 0; arr[i] != '\0'; i++)
 	{
-		printf("Построчно введите %d символов разделителей:\n", n);
-		//
-		for (i = 0; i < n; i++)
+		printf("'%c' ", arr[i]);
+	}
+	printf("\n");
+}
+//функция для ввода символов разделителей
+char* input_symb(int* l)
+{
+	char* symb, //строка символов-разделителей
+		c;			   //отдельный символ
+	int i,			   //переменная для организации цикла
+		j,			   //переменная для организации цикла
+		k,			   //переменная, обозначающая, что символ можно добавить в строку
+		end,		   //обозначение конца строки
+		flag;		   //флаг для добавления буквы в качестве символа-разделителя
+	end = 1;
+	symb = (char*)malloc(MAX_SIZE * sizeof(char));
+	printf("Введите строку символов разделителей:");
+	getchar();
+	for (i = 0; end; i++)
+	{
+		c = getch();
+		if (i < MAX_SIZE) printf("%c", c);
+		else
 		{
-			c = getchar();
-			k = 1;
-			for (j = 0; k && j < i; j++)
+			printf("Вы не можете ввести больше %d символов разделителей.\n", MAX_SIZE);
+			end = 0;
+		}
+		k = 1;
+		if (end)
+		{
+			for (j = 0; k && (j < i); j++)
 				if (c == symb[j])
 				{
-					puts("Вы уже ввели данный символ-разделитель");
 					i--;
 					k = 0;
 				}
-			if (c == '\n')
+			if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122))
+			{
+				puts("Вы действительно хотите ввести букву в качестве символа-разделителя?");
+				puts("Если да, то введите 1");
+				scanf_s("%d", &flag);
+				if (flag == 1)
+					k = 1;
+				else
+				{
+					i--;
+					k = 0;
+				}
+			}
+			if (c == '\r')
 			{
 				i--;
 				k = 0;
+				end = 0;
+				puts("\n");
 			}
 			if (k)
 				symb[i] = c;
 		}
-		//
-		symb[n] = '\0';
 	}
-	else puts("Memory allocation error.");
+	*l = i;
+	symb[*l] = '\0';
+	symb = (char*)realloc(symb, *l * sizeof(char*));
 	return symb;
 }
+//функция для расчета результата
 char** array_account(char** a, char** b, int* len, char* s, int k, int n, int* stb)
 {
 
-	int i, //номер строки
+	int i, //номер строки исходного массива
 		j, //номер символа в строке
 		g, //номер символа-разделителя
-		h,
-		str2 = 0,
+		h, //номер элемента в строке результирующего массива
+		str2,// номер строки результирующего массива
 		fl1, //нашелся символ-разделитель
-		pos,
-		word_len_min,
+		pos, //позиция минимального по длине слова
+		word_len_min, //минимальная длина слова в строке
 		word_start; //началось слово
 	int* word = (int*)malloc(n * sizeof(int)); //массив количества слов в строке
 	int** word_len = (int**)malloc(sizeof(int*)); //массив с колонками начало слова и длина слова
 	word_len[0] = (int*)malloc(2 * sizeof(int));
-	for (i = 0; i < n; i++)
+	str2 = 0;
+	if (word != NULL && word_len != NULL)
 	{
-		word[i] = 0;
-		word_start = 0;
-		pos = 0;
-		for(j = 0; j < len[i]; j++)
+		for (i = 0; i < n; i++)
 		{
-			fl1 = 0;
-			for (g = 0; g < k && !fl1; g++)
+			word[i] = 0;
+			word_start = 0;
+			pos = 0;
+			for (j = 0; j < len[i]; j++)
 			{
-				if (a[i][j] == s[g]) fl1 = 1;
-			}
-			if (!fl1)
-			{
-				if (!word_start)
+				fl1 = 0;
+				for (g = 0; g < k && !fl1; g++)
 				{
-					word_len = (int**)realloc(word_len, (word[i] + 1) * sizeof(int*));
-					word_len[word[i]] = (int*)malloc(2 * sizeof(int));
-					word_len[word[i]][0] = j;
-					word_len[word[i]][1] = 1;
-					word[i]++;
-					word_start = 1;
+					if (a[i][j] == s[g]) fl1 = 1;
+				}
+				if (!fl1)
+				{
+					if (!word_start)
+					{
+						word_len = (int**)realloc(word_len, (word[i] + 1) * sizeof(int*));
+						word_len[word[i]] = (int*)malloc(2 * sizeof(int));
+						word_len[word[i]][0] = j;
+						word_len[word[i]][1] = 1;
+						word[i]++;
+						word_start = 1;
+					}
+					else
+					{
+						word_len[word[i] - 1][1]++;
+					}
 				}
 				else
 				{
-					word_len[word[i]-1][1]++;
+					if (word_start)
+					{
+						word_start = 0;
+					}
 				}
 			}
-			else
+			if (word[i] != 0) word_len_min = word_len[0][1];
+			for (j = 0; j < word[i]; j++)
 			{
-				if (word_start)
+				if (word_len_min > word_len[j][1])
 				{
-					word_start = 0;
+					word_len_min = word_len[j][1];
+					pos = j;
 				}
+			}
+			if (word[i] != 0 && (word[i] % 2 == 1))
+			{
+				if (str2 == 0)
+				{
+					str2 = 1;
+					b = (char**)malloc(sizeof(char*));
+					b[0] = (char*)malloc((len[i] - word_len[pos][1]) * sizeof(char));
+				}
+				else
+				{
+					str2++;
+					b = (char**)realloc(b, str2 * sizeof(char*));
+					b[str2 - 1] = (char*)malloc((len[i] - word_len[pos][1] + 1) * sizeof(char));
+				}
+
+				for (j = 0, h = 0; j < len[i]; j++)
+				{
+					if (j < word_len[pos][0] || j >= (word_len[pos][0] + word_len[pos][1]))
+					{
+						b[str2 - 1][h] = a[i][j];
+						h++;
+					}
+				}
+				b[str2 - 1][h] = '\0';
+				printf("\n");
 			}
 		}
-		if (word[i] != 0) word_len_min = word_len[0][1];
-		printf("Количество слов в %d строке: %d \n", i, word[i]);
-		for (j = 0; j < word[i]; j++)
+		*stb = str2;
+	}
+	return b; 
+}
+//функция для вывода результата в консоль
+void result_output(char** b, int n)
+{
+	if (n == 0)
+	{
+		puts("Нет строк, удовлетворяющих условию.");
+	}
+	else
+	{
+		puts("Ваш текст:");
+		int i;
+		for (i = 0; i < n; i++)
 		{
-			printf("Начальная позиция слова %d: %d, длина этого слова: %d \n", j+1, word_len[j][0], word_len[j][1]);
-			if (word_len_min > word_len[j][1])
-			{
-				pos = j;
-			}
-		}
-		if(word[i] != 0  && (word[i] % 2 == 1))
-		{
-			if (str2 == 0)
-			{
-				str2 = 1;
-				b = (char**)malloc(sizeof(char*));
-				b[0] = (char*)malloc((len[i] - word_len[pos][1]) * sizeof(char));
-				//тут еще создать строку размером соответствующей строки - word_len_min b и скопировать все, кроме того слова
-			}
-			else//если уже были строки, то реалок
-			{
-				str2++;
-				b = (char**)realloc(b, str2 * sizeof(char*));
-				b[str2 - 1] = (char*)malloc((len[i] - word_len[pos][1])* sizeof(char));
-			}
-			
-			for (j = 0, h = 0; j < len[i]; j++)
-			{
-				if (j < word_len[pos][0] || j >= (word_len[pos][0] + word_len[pos][1]))
-				{
-					b[str2-1][h] = a[i][j];
-					printf("%c", a[i][j]);
-					h++;
-				}
-			}
+			printf("Ваша %d строка:\n", i + 1);
+			printf("%s", b[i]);
 			printf("\n");
 		}
 	}
-	*stb = str2;
-	return b; 
 }
-void result_output(char** b, int n)
-{
-	puts("Ваш текст:");
-	int i;
-	for (i = 0; i < n; i++)
-		printf("Ваша %d строка: %s\n", i + 1, b[i]);
-}
+//освобождение памяти из-под массива
 char** clear_array(char** a, int n)
 {
 	int i;
@@ -316,6 +504,23 @@ char** clear_array(char** a, int n)
 	free(a);
 	a = NULL;
 	return a;
+}
+//вывод результата в файл
+void result_output_file(char* file_name, char** b, int n)
+{
+	int i;
+	FILE * outfile;
+	if ((outfile = fopen(file_name, "w")) != NULL)
+	{
+		for (i = 0; i < n; i++)
+		{
+			fprintf(outfile, "%s", b[i]);
+			fprintf(outfile, "\n");
+		}
+		puts("Результат был записан в нужный файл.");
+		if (fclose(outfile) == EOF) perror("Output closing error");
+	}
+	else perror("Output opening error");
 }
 int** clear_array_int(int** a, int n)
 {
